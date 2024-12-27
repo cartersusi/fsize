@@ -10,30 +10,30 @@ import (
 
 var version string
 
-func GetFlag[T string | int | bool](long_flag, short_flag *T, value T, required bool, flag_name ...string) T {
+func GetFlag[T string | int | bool](longFlag, shortFlag *T, value T, required bool, flagName ...string) T {
 	flagstr := "flags"
-	if len(flag_name) > 0 {
-		flagstr = flag_name[0]
+	if len(flagName) > 0 {
+		flagstr = flagName[0]
 	}
 
-	if *long_flag == value && *short_flag == value {
+	if *longFlag == value && *shortFlag == value {
 		if required {
 			sh.Error(fmt.Sprintf("Missing values for %s. Please provide one.", flagstr), true)
 		}
 	}
 
-	if *long_flag != value && *short_flag != value {
+	if *longFlag != value && *shortFlag != value {
 		if required {
 			sh.Error(fmt.Sprintf("Both %s are set. Please provide only one.", flagstr), true)
 		}
 	}
 
-	if *long_flag != value {
-		return *long_flag
+	if *longFlag != value {
+		return *longFlag
 	}
 
-	if *short_flag != value {
-		return *short_flag
+	if *shortFlag != value {
+		return *shortFlag
 	}
 
 	return value
@@ -60,17 +60,18 @@ func main() {
 	directory := GetFlag(dir, d, "", true, "directory")
 	recurse := GetFlag(recursive, r, false, false, "recursive")
 	head_n := *n
+
 	sh.Success(fmt.Sprintf("Directory: %s", directory))
 	sh.Success(fmt.Sprintf("Recursive: %t", recurse))
 	sh.Success(fmt.Sprintf("Number: %d", head_n))
 
 	var cmd string
 	if recurse {
-		//find . -type f -exec du -sh {} + | sort -rh | head -n 5
+		// Includes hidden files by default since 'find' doesn’t exclude them
 		cmd = fmt.Sprintf("find %s -type f -exec du -sh {} + | sort -rh | head -n %d", directory, head_n)
 	} else {
-		//ls -lSha | head -n 10
-		cmd = fmt.Sprintf("du -sh %s/* | sort -rh | head -n %d", directory, head_n)
+		// Include hidden files by expanding .* and ignoring errors from . and ..
+		cmd = fmt.Sprintf("du -sh %s/* %s/.* 2>/dev/null | sort -rh | head -n %d", directory, directory, head_n)
 	}
 
 	out, err := exec.Command("sh", "-c", cmd).Output()
