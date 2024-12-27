@@ -67,10 +67,8 @@ func main() {
 
 	var cmd string
 	if recurse {
-		// Includes hidden files by default since 'find' doesn’t exclude them
 		cmd = fmt.Sprintf("find %s -type f -exec du -sh {} + | sort -rh | head -n %d", directory, head_n)
 	} else {
-		// Include hidden files by expanding .* and ignoring errors from . and ..
 		cmd = fmt.Sprintf("du -sh %s/* %s/.* 2>/dev/null | sort -rh | head -n %d", directory, directory, head_n)
 	}
 
